@@ -5,7 +5,12 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { signedUrl } from "@/lib/supabase/storage";
 import ChatPanel from "@/components/ChatPanel";
 import { formatDate, formatClock, sourceLabel } from "@/lib/format";
-import type { ActionItem } from "@/lib/types";
+import type { ActionItem, Call } from "@/lib/types";
+
+type CallWithRefs = Call & {
+  clients: { name: string } | null;
+  projects: { code: string | null; name: string } | null;
+};
 
 export const dynamic = "force-dynamic";
 
@@ -13,23 +18,20 @@ export default async function CallPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const db = supabaseAdmin();
 
-  const { data: call } = await db
+  const { data: callData } = await db
     .from("calls")
     .select("*, clients(name), projects(code, name)")
     .eq("id", id)
-    .single();
-  if (!call) notFound();
+    .maybeSingle();
+  if (!callData) notFound();
+  const c = callData as unknown as CallWithRefs;
 
   const [{ data: summary }, { data: segments }] = await Promise.all([
     db.from("call_summaries").select("*").eq("call_id", id).maybeSingle(),
     db.from("call_segments").select("*").eq("call_id", id).order("idx"),
   ]);
 
-  const videoSrc = call.media_path ? await signedUrl(call.media_path) : null;
-  const c = call as typeof call & {
-    clients: { name: string } | null;
-    projects: { code: string | null; name: string } | null;
-  };
+  const videoSrc = c.media_path ? await signedUrl(c.media_path) : null;
 
   return (
     <div className="mx-auto max-w-6xl px-8 py-6">
