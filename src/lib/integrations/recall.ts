@@ -4,14 +4,16 @@ import { env } from "@/lib/env";
 import type { TranscriptSegment } from "@/lib/ai/transcription";
 
 /**
- * Native transcription is requested from Recall (async, ~cheapest, and diarized
- * with real participant names). Our own STT (lib/ai/transcription) is a fallback
- * for sources without a provided transcript.
+ * Transcript comes from the meeting platform's own live captions (free, no
+ * separate polling step). Google Meet defaults its caption engine to English,
+ * so language_code must be forced to "fr" — otherwise it silently produces
+ * garbled English words for French speech (status stays "done" either way).
+ * Our own STT (lib/ai/transcription) is a fallback for sources without one.
  */
 const RECORDING_CONFIG = {
   video_mixed: {},
   audio_mixed: {},
-  transcript: { provider: { recallai_async: {} } },
+  transcript: { provider: { meeting_captions: { language_code: "fr" } } },
 } as const;
 
 /**
