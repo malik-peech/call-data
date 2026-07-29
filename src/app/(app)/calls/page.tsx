@@ -12,6 +12,8 @@ interface CallRow {
   started_at: string | null;
   duration_seconds: number | null;
   participants: string[];
+  recording_status: string;
+  failure_reason: string | null;
   clients: { name: string } | null;
   projects: { code: string | null; name: string } | null;
 }
@@ -27,7 +29,7 @@ export default async function CallsPage({
   let query = db
     .from("calls")
     .select(
-      "id, title, source, started_at, duration_seconds, participants, clients(name), projects(code, name)"
+      "id, title, source, started_at, duration_seconds, participants, recording_status, failure_reason, clients(name), projects(code, name)"
     )
     .is("duplicate_of", null)
     .order("started_at", { ascending: false, nullsFirst: false })
@@ -77,8 +79,9 @@ export default async function CallsPage({
             <div className="min-w-0 flex-1">
               <div className="truncate font-medium">{c.title ?? "Sans titre"}</div>
               <div className="mt-0.5 truncate text-xs text-[var(--text-muted)]">
-                {c.participants?.slice(0, 4).join(", ")}
-                {c.participants?.length > 4 ? "…" : ""}
+                {c.recording_status === "failed"
+                  ? c.failure_reason
+                  : `${c.participants?.slice(0, 4).join(", ")}${c.participants?.length > 4 ? "…" : ""}`}
               </div>
             </div>
             <div className="hidden w-40 shrink-0 text-xs text-[var(--text-muted)] sm:block">
@@ -91,6 +94,11 @@ export default async function CallsPage({
             <div className="w-36 shrink-0 text-right text-xs text-[var(--text-muted)]">
               {formatDate(c.started_at)}
             </div>
+            {c.recording_status === "failed" && (
+              <span className="w-24 shrink-0 rounded-full bg-red-500/10 px-2 py-1 text-center text-[10px] font-medium uppercase tracking-wide text-red-400">
+                Non admis
+              </span>
+            )}
             <span className="w-16 shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-1 text-center text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
               {sourceLabel(c.source)}
             </span>

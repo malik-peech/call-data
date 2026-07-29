@@ -60,7 +60,7 @@ async function recallFetch<T>(
 // ── Bots ──────────────────────────────────────────────────────
 export interface RecallBot {
   id: string;
-  status_changes?: { code: string; created_at: string }[];
+  status_changes?: { code: string; sub_code?: string | null; created_at: string }[];
   meeting_url?: unknown;
   recordings?: RecallRecording[];
   [k: string]: unknown;
@@ -119,6 +119,45 @@ export function getBotMedia(bot: RecallBot): {
 
 export function latestStatus(bot: RecallBot): string | undefined {
   return bot.status_changes?.at(-1)?.code;
+}
+
+/** French messages for the sub_codes Recall uses on admission/permission failures. */
+const ADMISSION_FAILURE_MESSAGES: Record<string, string> = {
+  timeout_exceeded_waiting_room: "Personne ne l'a laissé entrer (délai d'attente dépassé).",
+  call_ended_by_platform_waiting_room_timeout:
+    "Délai maximum en salle d'attente dépassé (limite imposée par la plateforme).",
+  bot_kicked_from_waiting_room: "Retiré de la salle d'attente par l'hôte.",
+  google_meet_bot_blocked: "Accès à la réunion refusé (Google Meet).",
+  zoom_bot_blocked: "Accès à la réunion refusé (Zoom).",
+  microsoft_teams_bot_not_invited: "Accès refusé : le bot n'était pas l'invité attendu (Teams).",
+  meeting_not_accessible: "Réunion inaccessible.",
+  recording_permission_denied: "Autorisation d'enregistrer refusée par les participants.",
+  timeout_exceeded_recording_permission_denied:
+    "Autorisation d'enregistrer refusée par les participants.",
+};
+
+/**
+ * Detect a bot that never actually captured the meeting: denied entry, stuck
+ * in the waiting room past the timeout, or recording permission refused.
+ * Returns a French, human-readable reason, or `null` if the bot got in fine
+ * (regardless of how the call itself ended afterwards).
+ */
+export function getAdmissionFailure(bot: RecallBot): string | null {
+  const changes = bot.status_changes ?? [];
+  const wasInCall = changes.some(
+    (c) => c.code === "in_call_recording" || c.code === "in_call_not_recording"
+  );
+  if (wasInCall) return null;
+
+  const last = changes.at(-1);
+  if (!last || (last.code !== "fatal" && last.code !== "call_ended")) return null;
+
+  if (last.sub_code && ADMISSION_FAILURE_MESSAGES[last.sub_code]) {
+    return ADMISSION_FAILURE_MESSAGES[last.sub_code];
+  }
+  return last.sub_code
+    ? `Bot non admis à la réunion (${last.sub_code}).`
+    : "Bot non admis à la réunion.";
 }
 
 /**

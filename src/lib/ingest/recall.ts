@@ -5,6 +5,7 @@ import {
   getBot,
   getBotMedia,
   fetchRecallTranscript,
+  getAdmissionFailure,
   type RecallBot,
 } from "@/lib/integrations/recall";
 import { transcribeFromUrl, type TranscriptSegment } from "@/lib/ai/transcription";
@@ -18,9 +19,37 @@ import { env } from "@/lib/env";
 export async function ingestRecallBot(botId: string): Promise<{ callId: string }> {
   const db = supabaseAdmin();
   const bot = await getBot(botId);
-  const media = getBotMedia(bot);
-
   const { title, startedAt, endedAt } = extractMeta(bot);
+
+  // 0. bot never actually captured the meeting (denied entry, waiting room
+  // timeout, recording permission refused) — flag it, skip media/transcript.
+  const failureReason = getAdmissionFailure(bot);
+  if (failureReason) {
+    const { data: call, error: upErr } = await db
+      .from("calls")
+      .upsert(
+        {
+          source: "recall",
+          external_id: botId,
+          recall_bot_id: botId,
+          title,
+          started_at: startedAt,
+          ended_at: endedAt,
+          recording_status: "failed",
+          failure_reason: failureReason,
+          summary_status: "error",
+          embed_status: "error",
+          raw: bot as unknown,
+        },
+        { onConflict: "source,external_id" }
+      )
+      .select("id")
+      .single();
+    if (upErr || !call) throw new Error(`Upsert failed-bot call failed: ${upErr?.message}`);
+    return { callId: call.id };
+  }
+
+  const media = getBotMedia(bot);
 
   // 1. transcript — prefer Recall's native, fall back to our STT on the audio.
   let segments: TranscriptSegment[] = [];

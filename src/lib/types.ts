@@ -44,6 +44,10 @@ export interface Call {
   participants: string[];
   video_url: string | null;
   video_source: string | null;
+  media_path: string | null;
+  recall_bot_id: string | null;
+  recording_status: "none" | "scheduled" | "recording" | "done" | "failed";
+  failure_reason: string | null;
   transcript_text: string | null;
   raw: unknown;
   client_id: string | null;

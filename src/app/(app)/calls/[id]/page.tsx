@@ -50,6 +50,12 @@ export default async function CallPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
+      {c.recording_status === "failed" && (
+        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
+          <span className="font-medium">Bot non admis.</span> {c.failure_reason}
+        </div>
+      )}
+
       <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         {/* Left: media + summary + transcript */}
         <div className="space-y-6">
