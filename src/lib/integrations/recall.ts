@@ -195,6 +195,29 @@ export async function fetchRecallTranscript(transcriptUrl: string): Promise<Tran
 }
 
 // ── Calendar V2 (auto-scheduling) ─────────────────────────────
+export interface RecallCalendar {
+  id: string;
+  platform: string;
+  [k: string]: unknown;
+}
+
+/**
+ * Connect a team member's Google Calendar to Recall (per-user OAuth — see
+ * /auth/calendar/connect). Recall then handles refreshing the token itself
+ * and starts emitting `calendar.sync_events` webhooks for this calendar.
+ */
+export function createGoogleCalendar(refreshToken: string): Promise<RecallCalendar> {
+  return recallFetch<RecallCalendar>("/api/v2/calendars/", {
+    method: "POST",
+    body: {
+      platform: "google_calendar",
+      oauth_client_id: env.google.calendarOAuth.clientId,
+      oauth_client_secret: env.google.calendarOAuth.clientSecret,
+      oauth_refresh_token: refreshToken,
+    },
+  });
+}
+
 export interface RecallCalendarEvent {
   id: string;
   start_time: string;

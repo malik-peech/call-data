@@ -18,13 +18,22 @@ interface CallRow {
   projects: { code: string | null; name: string } | null;
 }
 
+const CALENDAR_MESSAGES: Record<string, { text: string; error?: boolean }> = {
+  connected: { text: "Agenda connecté à Recall — les prochaines réunions seront planifiées automatiquement." },
+  missing_code: { text: "Connexion agenda annulée.", error: true },
+  exchange_failed: { text: "Échec de connexion à Google (réessaie).", error: true },
+  no_refresh_token: { text: "Google n'a pas renvoyé d'autorisation persistante (réessaie).", error: true },
+  recall_error: { text: "Google a autorisé l'accès, mais Recall a refusé la connexion (réessaie).", error: true },
+};
+
 export default async function CallsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; source?: string; client?: string }>;
+  searchParams: Promise<{ q?: string; source?: string; client?: string; calendar?: string }>;
 }) {
   const sp = await searchParams;
   const db = supabaseAdmin();
+  const calendarMsg = sp.calendar ? CALENDAR_MESSAGES[sp.calendar] : undefined;
 
   let query = db
     .from("calls")
@@ -61,6 +70,18 @@ export default async function CallsPage({
     <div className="mx-auto max-w-5xl px-8 py-8">
       <h1 className="text-2xl font-semibold">Calls</h1>
       <p className="mt-1 text-sm text-[var(--text-muted)]">{rows.length} résultat(s)</p>
+
+      {calendarMsg && (
+        <div
+          className={`mt-4 rounded-xl border p-3 text-sm ${
+            calendarMsg.error
+              ? "border-red-500/30 bg-red-500/10 text-red-400"
+              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+          }`}
+        >
+          {calendarMsg.text}
+        </div>
+      )}
 
       <div className="mt-5">
         <CallFilters clients={clients} />

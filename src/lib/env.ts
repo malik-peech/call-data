@@ -60,6 +60,22 @@ export const env = {
     serviceAccountJsonBase64: optional(process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64),
     impersonateSubject: optional(process.env.GOOGLE_IMPERSONATE_SUBJECT),
     meetFolderId: optional(process.env.GOOGLE_MEET_FOLDER_ID),
+    // Separate OAuth Web client used to connect team members' calendars to
+    // Recall (per-user consent, distinct from the service account above).
+    calendarOAuth: {
+      get clientId() {
+        return required(
+          "GOOGLE_CALENDAR_OAUTH_CLIENT_ID",
+          process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_ID
+        );
+      },
+      get clientSecret() {
+        return required(
+          "GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET",
+          process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET
+        );
+      },
+    },
   },
 
   airtable: {

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Phone, MessagesSquare, LogOut } from "lucide-react";
+import { Phone, MessagesSquare, LogOut, CalendarPlus } from "lucide-react";
 
 const NAV = [
   { href: "/calls", label: "Calls", icon: Phone },
@@ -35,6 +35,13 @@ export default function Sidebar({ email }: { email: string | null }) {
         })}
       </nav>
       <div className="mt-auto border-t border-[var(--border)] pt-3">
+        <a
+          href="/auth/calendar/connect"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
+        >
+          <CalendarPlus size={16} />
+          Connecter mon agenda
+        </a>
         {email && <p className="px-3 pb-2 text-xs text-[var(--text-muted)] truncate">{email}</p>}
         <form action="/auth/signout" method="post">
           <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)]">
