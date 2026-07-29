@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.env
+.env*.local
+*.log
+docs
+secrets
+google-service-account*.json

@@ -1,0 +1,31 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# production
+/build
+
+# env
+.env
+.env*.local
+.env.local
+
+# secrets
+/secrets
+*.pem
+google-service-account*.json
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
+
+# vercel
+.vercel
