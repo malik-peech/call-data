@@ -206,19 +206,20 @@ export function shouldRecordEvent(ev: RecallCalendarEvent): boolean {
   return !blocked;
 }
 
-// ── Webhook verification (Svix scheme) ────────────────────────
+// ── Webhook verification (Standard Webhooks / Svix scheme) ────
 /**
- * Verify a Svix-signed Recall webhook.
- * Signed content = `${svix-id}.${svix-timestamp}.${rawBody}`, HMAC-SHA256 with
- * the base64 secret (strip the `whsec_` prefix). `svix-signature` is a
- * space-separated list of `v1,<base64sig>`.
+ * Verify a Recall webhook signed per the Standard Webhooks spec (Svix).
+ * Signed content = `${id}.${timestamp}.${rawBody}`, HMAC-SHA256 with
+ * the base64 secret (strip the `whsec_` prefix). The signature header is a
+ * space-separated list of `v1,<base64sig>`. Recall sends `webhook-*` headers;
+ * accept the legacy `svix-*` names too in case that ever changes back.
  */
 export function verifyWebhook(headers: Headers, rawBody: string): boolean {
   const secret = env.recall.webhookSecret;
   if (!secret) return false;
-  const id = headers.get("svix-id");
-  const ts = headers.get("svix-timestamp");
-  const sigHeader = headers.get("svix-signature");
+  const id = headers.get("webhook-id") ?? headers.get("svix-id");
+  const ts = headers.get("webhook-timestamp") ?? headers.get("svix-timestamp");
+  const sigHeader = headers.get("webhook-signature") ?? headers.get("svix-signature");
   if (!id || !ts || !sigHeader) return false;
 
   const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
