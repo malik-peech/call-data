@@ -239,20 +239,19 @@ export function listCalendarEvents(params: {
 }
 
 export function scheduleBotForEvent(eventId: string, botName = "Peech Notetaker"): Promise<unknown> {
-  return recallFetch("/api/v2/calendar-events/bot/", {
+  return recallFetch(`/api/v2/calendar-events/${eventId}/bot/`, {
     method: "POST",
     body: {
-      calendar_event: eventId,
+      // Required, and doubles as our idempotency guard against duplicate
+      // bots if this reconcile ever re-runs for the same event.
+      deduplication_key: eventId,
       bot_config: { bot_name: botName, recording_config: RECORDING_CONFIG },
     },
   });
 }
 
 export function unscheduleBotForEvent(eventId: string): Promise<unknown> {
-  return recallFetch("/api/v2/calendar-events/bot/", {
-    method: "DELETE",
-    body: { calendar_event: eventId },
-  });
+  return recallFetch(`/api/v2/calendar-events/${eventId}/bot/`, { method: "DELETE" });
 }
 
 /**
