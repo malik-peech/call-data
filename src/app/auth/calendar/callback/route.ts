@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createGoogleCalendar } from "@/lib/integrations/recall";
 import { env } from "@/lib/env";
 
@@ -37,7 +38,10 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`${origin}/calls?calendar=exchange_failed`);
   }
 
-  const { refresh_token: refreshToken } = (await tokenRes.json()) as { refresh_token?: string };
+  const { access_token: accessToken, refresh_token: refreshToken } = (await tokenRes.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+  };
   if (!refreshToken) {
     // Google omits refresh_token on repeat consent without prompt=consent;
     // we always send prompt=consent, so this should only happen if revoked
@@ -45,11 +49,38 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`${origin}/calls?calendar=no_refresh_token`);
   }
 
+  // Whose calendar is this — may differ from the app-login email if the
+  // person picked a different Google account in the consent screen.
+  let connectedEmail = user.email ?? null;
+  if (accessToken) {
+    const infoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (infoRes.ok) {
+      const info = (await infoRes.json()) as { email?: string };
+      connectedEmail = info.email ?? connectedEmail;
+    }
+  }
+
+  let calendar;
   try {
-    await createGoogleCalendar(refreshToken);
+    calendar = await createGoogleCalendar(refreshToken);
   } catch (e) {
     console.error("[calendar-connect] Recall createGoogleCalendar failed:", e);
     return NextResponse.redirect(`${origin}/calls?calendar=recall_error`);
+  }
+
+  if (connectedEmail) {
+    const db = supabaseAdmin();
+    await db.from("connected_calendars").upsert(
+      {
+        email: connectedEmail.toLowerCase(),
+        recall_calendar_id: calendar.id,
+        platform: "google_calendar",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "email" }
+    );
   }
 
   return NextResponse.redirect(`${origin}/calls?calendar=connected`);

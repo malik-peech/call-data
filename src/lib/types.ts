@@ -161,6 +161,14 @@ export interface Database {
         stats: unknown;
         error: string | null;
       }>;
+      connected_calendars: Table<{
+        id: string;
+        email: string;
+        recall_calendar_id: string;
+        platform: string;
+        connected_at: string;
+        updated_at: string;
+      }>;
     };
     Functions: {
       match_call_chunks: {

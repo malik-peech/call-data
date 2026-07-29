@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Phone, MessagesSquare, LogOut, CalendarPlus } from "lucide-react";
+import { Phone, MessagesSquare, LogOut, CalendarPlus, CalendarCheck } from "lucide-react";
 
 const NAV = [
   { href: "/calls", label: "Calls", icon: Phone },
   { href: "/chat", label: "Recherche IA", icon: MessagesSquare },
+  { href: "/calendars", label: "Agendas connectés", icon: CalendarCheck },
 ];
 
 export default function Sidebar({ email }: { email: string | null }) {
