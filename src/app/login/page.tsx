@@ -25,14 +25,14 @@ function LoginInner() {
         Réservé aux comptes de l&apos;agence.
       </p>
       {error === "domain" && (
-        <p className="mt-4 rounded-md bg-red-500/10 p-3 text-sm text-red-400">
+        <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
           Ce compte n&apos;est pas autorisé (domaine non reconnu).
         </p>
       )}
       <button
         onClick={signIn}
         disabled={loading}
-        className="mt-6 rounded-lg bg-white px-4 py-2.5 font-medium text-black transition hover:opacity-90 disabled:opacity-50"
+        className="mt-6 rounded-lg border border-[var(--border)] bg-white px-4 py-2.5 font-medium text-black shadow-sm transition hover:bg-[var(--surface-2)] disabled:opacity-50"
       >
         {loading ? "Redirection…" : "Continuer avec Google"}
       </button>

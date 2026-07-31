@@ -1,15 +1,18 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { currentUser } from "@/lib/supabase/server";
+import { toAccessUser, visibleCallIdsFor } from "@/lib/access";
 import TransversalChat from "@/components/TransversalChat";
 
 export const dynamic = "force-dynamic";
 
 export default async function ChatPage() {
   const db = supabaseAdmin();
-  const { data: rows } = await db
-    .from("calls")
-    .select("client_id, clients(name)")
-    .not("client_id", "is", null)
-    .limit(2000);
+  const accessUser = toAccessUser(await currentUser());
+  const visibleIds = await visibleCallIdsFor(accessUser);
+
+  let clientQuery = db.from("calls").select("client_id, clients(name)").not("client_id", "is", null).limit(2000);
+  if (visibleIds) clientQuery = clientQuery.in("id", visibleIds.size > 0 ? [...visibleIds] : [""]);
+  const { data: rows } = await clientQuery;
 
   const map = new Map<string, string>();
   for (const r of (rows ?? []) as { client_id: string; clients: { name: string } | null }[]) {

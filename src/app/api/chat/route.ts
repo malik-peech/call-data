@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { currentUser } from "@/lib/supabase/server";
+import { toAccessUser, visibleCallIdsFor } from "@/lib/access";
 import { searchChunks } from "@/lib/ai/search";
 import { answerQuestion, type AnswerSource } from "@/lib/ai/anthropic";
 import type { Citation, ChatScope } from "@/lib/types";
@@ -23,14 +25,26 @@ export async function POST(req: Request) {
   }
   const db = supabaseAdmin();
 
+  // Restrict retrieval to calls this user is allowed to see (everyone except
+  // malik@peechstudio.com is scoped to calls they participated in).
+  const accessUser = toAccessUser(await currentUser());
+  const visibleIds = await visibleCallIdsFor(accessUser);
+  if (body.scope === "call" && visibleIds && body.callId && !visibleIds.has(body.callId)) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
   // 1. retrieve relevant chunks within scope
-  const matches = await searchChunks({
+  // Over-fetch when we'll post-filter by visibility, so a restricted user
+  // doesn't lose relevant hits just because higher-ranked chunks belonged to
+  // calls they can't see (match_call_chunks has no per-user ACL filter).
+  const rawMatches = await searchChunks({
     query: body.question,
     callId: body.scope === "call" ? body.callId : undefined,
     clientId: body.scope === "client" ? body.clientId : undefined,
     projectId: body.scope === "project" ? body.projectId : undefined,
-    limit: 12,
+    limit: visibleIds ? 60 : 12,
   });
+  const matches = (visibleIds ? rawMatches.filter((m) => visibleIds.has(m.call_id)) : rawMatches).slice(0, 12);
 
   const sources: AnswerSource[] = matches.map((m, i) => ({
     index: i + 1,

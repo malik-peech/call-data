@@ -4,7 +4,8 @@ import { createServerClient } from "@supabase/ssr";
 /**
  * Refreshes the Supabase session cookie and guards the app: unauthenticated
  * users are sent to /login. Public paths: /login, /auth/*, /api/* (API routes
- * are authorized by their own secrets/webhook signatures).
+ * are authorized by their own secrets/webhook signatures), /share/* (read-only
+ * links gated by an unguessable per-call token, not by session).
  */
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next({ request: req });
@@ -30,7 +31,8 @@ export async function middleware(req: NextRequest) {
   const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
-    pathname.startsWith("/api");
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/share");
 
   if (!user && !isPublic) {
     const url = req.nextUrl.clone();

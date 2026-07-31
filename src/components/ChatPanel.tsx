@@ -62,18 +62,18 @@ export default function ChatPanel({ scope, callId, clientId, projectId, placehol
             <div
               className={`inline-block max-w-[90%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
                 m.role === "user"
-                  ? "bg-[var(--accent)] text-black"
+                  ? "bg-[var(--accent)] text-white"
                   : "bg-[var(--surface-2)] text-[var(--text)]"
               }`}
             >
               {m.content}
               {m.citations && m.citations.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5 border-t border-white/10 pt-2">
+                <div className="mt-2 flex flex-wrap gap-1.5 border-t border-black/10 pt-2">
                   {m.citations.map((c, j) => (
                     <Link
                       key={j}
                       href={`/calls/${c.call_id}`}
-                      className="rounded-full bg-black/20 px-2 py-0.5 text-[11px] hover:underline"
+                      className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] hover:underline"
                     >
                       {c.title ?? "call"}
                     </Link>
@@ -103,7 +103,7 @@ export default function ChatPanel({ scope, callId, clientId, projectId, placehol
         <button
           onClick={send}
           disabled={loading}
-          className="rounded-lg bg-[var(--accent)] p-2.5 text-black transition hover:opacity-90 disabled:opacity-50"
+          className="rounded-lg bg-[var(--accent)] p-2.5 text-white transition hover:opacity-90 disabled:opacity-50"
         >
           <Send size={16} />
         </button>

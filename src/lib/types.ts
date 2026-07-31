@@ -57,6 +57,9 @@ export interface Call {
   duplicate_of: string | null;
   summary_status: ProcessStatus;
   embed_status: ProcessStatus;
+  is_favorite: boolean;
+  share_enabled: boolean;
+  share_token: string | null;
   synced_at: string;
   created_at: string;
   updated_at: string;
